@@ -1,58 +1,56 @@
-# TCP Credentials Verification System
+# Login over TCP
 
-A complete, robust credentials verification system over TCP written in Python from scratch, adhering to the standard Berkeley TCP socket lifecycle.
+Simple client-server authentication system over standard TCP sockets in Python. Built for CNWT Lab 5.
 
-## Architecture & Workflow
+## Overview
 
-* **Server:** Binds to `127.0.0.1:12345`, listens for incoming client connections (up to 1 in the backlog queue), and manages them sequentially. It stores user credentials in a local `users.json` file. Passwords are hashed using SHA-256 for secure verification. 
-* **Client:** Connects to the server, interactively prompts the user for credentials (masking the password cleanly using `getpass`), and transmits them sequentially for validation over the socket.
+Socket-based authentication without any external libraries:
+- **Server (`server/server.py`)**: Listens on `127.0.0.1:12345`, verifies credentials against SHA-256 hashes stored in `server/users.json`, and disconnects after 3 failed attempts.
+- **Client (`client/client.py`)**: Connects to the server, prompts for username/password (masked with `getpass`), and displays the server verdict.
 
-### Socket Lifecycle
-* **Server:** `socket()` -> `bind()` -> `listen()` -> `accept()` -> `recv()`/`send()` -> `close()`
-* **Client:** `socket()` -> `connect()` -> `send()`/`recv()` -> `close()`
+### Socket Flow
+- **Server**: `socket()` → `bind()` → `listen()` → `accept()` → `recv()` / `send()` → `close()`
+- **Client**: `socket()` → `connect()` → `send()` / `recv()` → `close()`
 
-## Directory Structure
-```
+## Project Layout
+
+```text
 .
 ├── server/
-│   ├── server.py             # TCP Server implementation
-│   └── users.json            # Hashed user credential database (auto-generated)
+│   ├── server.py      # TCP server
+│   └── users.json     # User credentials (auto-created on first run)
 ├── client/
-│   └── client.py             # TCP Client implementation
-└── README.md                 # Setup, architecture diagram, and execution steps
+│   └── client.py      # TCP client CLI
+└── README.md
 ```
 
-## Setup and Execution
+## Running the Project
 
-Ensure you have Python 3 installed. No external dependencies or packages are required as it utilizes only the Python standard library.
+Requires Python 3.
 
-### 1. Start the Server
-
-Open your first terminal and start the server script:
-
-```powershell
+### 1. Run the Server
+In terminal 1:
+```bash
 python server/server.py
 ```
-*Note: Upon its first run, the server will automatically generate `server/users.json` with three demo accounts.*
 
-### 2. Start the Client
-
-Open a second terminal and start the client script:
-
-```powershell
+### 2. Run the Client
+In terminal 2:
+```bash
 python client/client.py
 ```
-*Follow the interactive prompts in the terminal to authenticate.*
 
-## Demo Credentials
+## Default Test Accounts
 
-By default, the following demo credentials are seeded and stored as SHA-256 digests in the `users.json` file:
-- Username: `admin` / Password: `adminpass`
-- Username: `student` / Password: `studentpass`
-- Username: `guest` / Password: `guestpass`
+Generated in `server/users.json` on initial server launch:
 
-## Protocol Features
-- Supports multiple consecutive client connections safely within a `while True` loop.
-- Client socket disconnections or abrupt closures are gracefully handled using `try...finally` resource cleanups.
-- Configured with `SO_REUSEADDR` to prevent address collision errors during restarts.
-- Allows up to 3 failed authentication attempts per session before automatically terminating the connection and locking out.
+| Username | Password |
+|---|---|
+| `admin` | `adminpass` |
+| `student` | `studentpass` |
+| `guest` | `guestpass` |
+
+## Notes
+- `SO_REUSEADDR` is set to avoid port lock errors on restarts.
+- Client teardown and unexpected disconnects are handled in `try...finally`.
+- A session closes automatically after 3 invalid attempts.
